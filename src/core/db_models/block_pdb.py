@@ -41,6 +41,8 @@ class BlockPDB(DBModel):
 if __name__ == '__main__':
     print('Test prefixed block db.\n')
 
+    '''
+
     # create prefixed database
     block_pdb = BlockPDB('test_')
 
@@ -101,3 +103,17 @@ if __name__ == '__main__':
 
     last_key = block_pdb.get_last_key()
     print(last_key)
+
+    '''
+    # is singleton
+
+    s1 = BlockPDB()
+    s2 = BlockPDB()
+
+    print(s1.get_last_key())
+    print(s2.get_last_key())
+
+    if id(s1) == id(s2):
+        print("Singleton works, both variables contain the same instance.")
+    else:
+        print("Singleton failed, variables contain different instances.")

@@ -3,6 +3,8 @@ import rsa
 # !!! TODO: do we need this script at all?
 
 '''
+    RSA lib
+
     Logic description:
     1. You should generate RSA public and private keys (OpenSSL):
         a. openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -pkeyopt rsa_keygen_publexp:3 -out private_key.pem

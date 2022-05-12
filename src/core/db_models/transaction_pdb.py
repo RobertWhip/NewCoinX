@@ -14,6 +14,8 @@ from db import DBModel
 # Should we store blocks and transactions separately?
 # Or should we store them together?
 
+# !!! This class was not propely tested. DO NOT USE IT
+
 class TransactionPDB(DBModel):
     def __init__(self, prefix='') -> None:
         super().__init__(prefix + db_configs.DB_TX_PREFIX)

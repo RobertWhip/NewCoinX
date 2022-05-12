@@ -11,7 +11,7 @@ import configs.constants as constants
 import configs.errors as errors
 from transaction import Tx
 from error import Error
-import timestamp
+import utils.timestamp as timestamp
 
 
 class Block:

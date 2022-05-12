@@ -1,26 +1,26 @@
 # External
-from tracemalloc import start
 from typing import List, Union
-import sys
-sys.path.append('..')
 
 # Internal
+from db_models.block_pdb import BlockPDB
+from db_models.singleton_meta import SingletonMeta
 import configs.constants as constants
-import configs.errors as errors
+import core.configs.errors as errors
 from transaction import Tx
 from block import Block
 from error import Error
-from db_models.block_pdb import BlockPDB
 
 '''
-    TODO: secure the blockchain
-        1. Use a BigNumber lib
-        2. Add try-catches
-        3. Think about timestamps
+    TODO: 
+        1. Secure the blockchain
+        2. Use a BigNumber lib
+        3. Add try-catches
+        4. Think about timestamps
 '''
 
-class BlockchainCore:
+class BlockchainCore(metaclass=SingletonMeta):
     def __init__(self) -> None:
+        print('Blockchain Core initialized!')
         self.pending_txs = []
         self.db = BlockPDB()
         self.db.init_db(BlockchainCore.get_genesis_blocks())
@@ -45,7 +45,7 @@ class BlockchainCore:
                     )
                 ], 
                 constants.DEAD_ADDR,
-                0
+                1
             )
         ]
 
@@ -56,20 +56,32 @@ class BlockchainCore:
         return self.db.get_last_key()
 
     def get_blocks(self, page=1, page_size=50):
-        max_height = self.get_max_height() # for example: 1000
-        print('Max height: ', max_height)
+        max_height = self.get_max_height()
 
-        stop = max_height - (page - 1) * page_size # 1000
-        start = stop - page_size if stop - page_size > 0 else 0 # 950
-        print('Start from: ', start)
-        print('Stop at: ', stop)
+        start = max_height - page * page_size
+        stop = max_height - (page - 1) * page_size
 
-        it = self.db.open_iter(start=start, stop=stop, reverse=True, include_key=False)
+        if start < 0:
+            start = 0
+        if stop > max_height:
+            stop = max_height
+
+        it = self.db.open_iter(
+            include_start=False,
+            include_stop=True,
+            include_key=False,
+            reverse=True, 
+            start=start, 
+            stop=stop
+        )
+
         blocks = []
         for val in it:
             blocks.append(self.db.deserialize(val))
 
-        return blocks
+        self.db.close_iter(it)
+
+        return blocks, { 'count': max_height, 'pages': -(-max_height//page_size) }
 
     # Pending txs from memory
     def get_pending_txs(self):

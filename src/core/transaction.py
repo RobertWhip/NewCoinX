@@ -1,15 +1,13 @@
 # External
 from typing import Union
 import hashlib
-import sys
-sys.path.append('..')
 
 # Internal
 import configs.constants as constants
+import utils.timestamp as timestamp
 import configs.errors as errors
+import utils.wallet as wallet
 from error import Error
-import timestamp
-import wallet
 
 '''
     TODO:

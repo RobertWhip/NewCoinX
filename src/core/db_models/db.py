@@ -3,15 +3,15 @@ from typing import Union
 import plyvel
 import sys
 
-from yaml import serialize
 sys.path.append('..')
 
 # Internal
-import utils.converter as conv
+from db_models.singleton_meta import SingletonMeta
 import configs.db as db_configs
+import utils.converter as conv
 
 # Abstract LevelDB model
-class DBModel:
+class DBModel(metaclass=SingletonMeta):
     def __init__(self, prefix) -> None:
         self.super_db = plyvel.DB(
             db_configs.DB_PATH,
@@ -51,7 +51,9 @@ class DBModel:
         snapshot=False,
         include_value=True,
         include_key=True,
-        reverse=False
+        reverse=False,
+        include_stop=True,
+        include_start=True
     ):
         db = self.db.snapshot() if snapshot else self.db
 
@@ -61,6 +63,8 @@ class DBModel:
             include_value=include_value,
             include_key=include_key,
             reverse=reverse,
+            include_stop=include_stop,
+            include_start=include_start
         )
 
     # Returns next iteration
