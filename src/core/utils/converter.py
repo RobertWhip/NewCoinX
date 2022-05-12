@@ -12,7 +12,6 @@ def data_2_bytes(obj):
 def bytes_2_data(bytes):
     return pickle.loads(bytes)
 
-
 def obj_2_dict(obj, obj_types) -> dict:
     obj = vars(obj)
 
@@ -27,6 +26,7 @@ def obj_2_dict(obj, obj_types) -> dict:
     return obj
 
 def list_obj_2_list_dict(list, obj_types) -> List[dict]:
+    # TODO: do we need this condition here?
     if len(list) == 0:
         return list
 

@@ -2,8 +2,8 @@
 from typing import List, Union
 
 # Internal
-from db_models.block_pdb import BlockPDB
 from db_models.singleton_meta import SingletonMeta
+from db_models.block_pdb import BlockPDB
 import configs.constants as constants
 import core.configs.errors as errors
 from transaction import Tx
@@ -184,23 +184,19 @@ if __name__ == '__main__':
     privateB, publicB = constants.USER_X_SECRET, constants.USER_X_ADDR
     
     blockchain = BlockchainCore()
-    print(blockchain)
     print('Is blockchain valid: ', blockchain.validate())
 
     add_test_block(blockchain, create_tx(publicA, publicB, 10, privateA))
     
-    #add_test_block(blockchain, create_tx(publicB, publicA, 10, privateB))
-
-
     blockchain.mine_pending_txs(publicB)
 
-    print(blockchain)
     print('Is blockchain valid: ', blockchain.validate())
 
     print('\n\nBalance of SATOSHI', blockchain.get_balance(constants.SATOSHI_ADDR))
     print('Balance of USER_X', blockchain.get_balance(constants.USER_X_ADDR))
 
-    blocks = blockchain.get_blocks(1, 9999)
+    blocks, stats = blockchain.get_blocks(1, 9999)
     print('Blocks:\n', blocks)
+    
     for b in blocks:
        print(b)

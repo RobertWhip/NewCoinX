@@ -4,15 +4,15 @@ from typing import List
 import hashlib
 import json
 import sys
+
 sys.path.append('..')
 
 # Internal
 import configs.constants as constants
+import utils.timestamp as timestamp
 import configs.errors as errors
 from transaction import Tx
 from error import Error
-import utils.timestamp as timestamp
-
 
 class Block:
     def __init__(
@@ -28,7 +28,6 @@ class Block:
         self.nonce: int = 0
         self.version = 0
         self.hash: str = self.calc_hash()
-
 
     def __str__(self) -> str:
         return f'\tBlock:\n\
@@ -73,7 +72,6 @@ class Block:
     def is_valid(block) -> bool:
         print('Is block valid\'s block: ', block)
         return Block.verify_txs(block)
-
 
     # TODO: change blockchain consensus: POW to POA
     def mine(self):

@@ -1,7 +1,6 @@
 import binascii
 import ecdsa
 
-
 # Convert ECDSA key to HEX string
 #
 # Function arguments:
@@ -10,7 +9,6 @@ import ecdsa
 # returns ECDSA key HEX in UTF-8
 def to_hex(key) -> str:
     return binascii.hexlify(key.to_string()).decode('utf-8')
-
 
 # Convert public key string to ECDSA public key
 #
@@ -38,7 +36,6 @@ def to_ecdsa_private(private_key: str, curve=ecdsa.SECP256k1):
         curve
     )
 
-
 # Convert ECDSA private key to ECDSA public key
 #
 # Function arguments:
@@ -47,7 +44,6 @@ def to_ecdsa_private(private_key: str, curve=ecdsa.SECP256k1):
 # returns ECDSA public key
 def ecdsa_private_to_public(private_key):
     return private_key.get_verifying_key()
-
 
 # Key generator function.
 #
@@ -61,7 +57,6 @@ def gen_keys(curve=ecdsa.SECP256k1):
 
     return private_key, public_key
 
-
 # Create signature for a message
 #
 # Function arguments:
@@ -71,7 +66,6 @@ def gen_keys(curve=ecdsa.SECP256k1):
 # returns a signature
 def create_signature(msg, private_key):
     return private_key.sign(msg.encode('ascii'))
-
 
 # Verify signature of a message
 #
@@ -83,7 +77,6 @@ def create_signature(msg, private_key):
 # returns True (bool) if the message was successfully verified, else throws an error
 def verify_signature(msg: str, sign, public_key) -> bool:
     return public_key.verify(sign, msg.encode('ascii'))
-
 
 # Example of using this module
 if __name__ == '__main__':
