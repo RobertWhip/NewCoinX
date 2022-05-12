@@ -53,7 +53,6 @@ class Tx:
             Amount: {self.amount}\n\
             Timestamp: {self.timestamp}\n'
     
-
     def calc_hash(self) -> str:
         return hashlib.sha256(
             (
@@ -63,7 +62,6 @@ class Tx:
                 str(self.amount)
             ).encode('utf-8')
         ).hexdigest()
-
 
     def sign(self, private_key) -> Union[bool, Error]:
         private_key = wallet.to_ecdsa_private(private_key)
@@ -109,8 +107,6 @@ class Tx:
             tx.signature, 
             public_key
         ), None
-
-
 
 if __name__ == '__main__':
     print(Tx('1', '2', 3))
