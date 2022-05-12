@@ -1,5 +1,5 @@
 from datetime import datetime
 
 
-def now() -> int:
+def now() -> float:
     return datetime.now().timestamp()
