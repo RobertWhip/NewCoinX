@@ -16,6 +16,7 @@ from error import Error
         2. Use a BigNumber lib
         3. Add try-catches
         4. Think about timestamps
+        5. Implement P2P network functionality (connect to nodes, air blocks/transactions)
 '''
 
 class BlockchainCore(metaclass=SingletonMeta):
