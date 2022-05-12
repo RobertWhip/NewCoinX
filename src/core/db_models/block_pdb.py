@@ -27,10 +27,11 @@ class BlockPDB(DBModel):
 
         return is_init
 
-    # Save blocks
+    # Save blocks to prefixed LocalDB
     #
-    # This function will save the given blocks in local LevelDB.
-    # Key = the block's height, value = the block itself
+    # This function saves blocks to local LevelDB.
+    # Key = the block's height.
+    # value = the block itself.
     #
     # return True if succeed
     def save(self, blocks: List[Block]) -> bool:
