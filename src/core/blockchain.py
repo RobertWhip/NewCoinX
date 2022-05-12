@@ -21,6 +21,7 @@ from error import Error
 
 class BlockchainCore(metaclass=SingletonMeta):
     def __init__(self) -> None:
+        # TODO: add more flexible logger
         print('Blockchain Core initialized!')
         self.pending_txs = []
         self.db = BlockPDB()
