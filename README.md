@@ -6,6 +6,9 @@ The blocks with transactions are stored in LevelDB.
 Wallet's hashing algorithm: ECDSA secp256k1.
 
 
+https://github.com/RobertWhip/NewCoinX/tree/master - implements Proof-of-Work
+
+
 ## How to start the blockchain node
 Instructions:
 1. Go to <i>src/core</i>
