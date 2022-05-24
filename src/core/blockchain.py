@@ -1,7 +1,9 @@
 # External
 from typing import List, Union
+import copy
 
 # Internal
+from consensus.challenger_service import ChallengerService
 from db_models.singleton_meta import SingletonMeta
 from db_models.block_pdb import BlockPDB
 import configs.constants as constants
@@ -9,6 +11,7 @@ import core.configs.errors as errors
 from transaction import Tx
 from block import Block
 from error import Error
+#import consensus.challenger_service
 
 '''
     TODO: 
@@ -21,14 +24,21 @@ from error import Error
 
 class BlockchainCore(metaclass=SingletonMeta):
     def __init__(self) -> None:
+        self.challenger_service = ChallengerService()
+        self.pending_txs: List[Tx] = []
+        self.db: BlockPDB = BlockPDB()
+
+        # Create DB with genesis block if it wasn't yet
+        self.db.init_db(BlockchainCore.get_genesis_blocks())
+
         # TODO: add more flexible logger
         print('Blockchain Core initialized!')
-        self.pending_txs = []
-        self.db = BlockPDB()
-        self.db.init_db(BlockchainCore.get_genesis_blocks())
 
     def __str__(self) -> str:
         return f'\tBlockchain'
+
+    def chrService(self) -> ChallengerService:
+        return self.challenger_service
 
     @staticmethod
     def get_genesis_blocks() -> List[Block]:
@@ -87,7 +97,7 @@ class BlockchainCore(metaclass=SingletonMeta):
 
     # Pending txs from memory
     def get_pending_txs(self):
-        return self.pending_txs
+        return copy.deepcopy(self.pending_txs)
 
     # TODO: how to replace this function?
     def mine_pending_txs(self, miner_addr):

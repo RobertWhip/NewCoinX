@@ -1,16 +1,11 @@
 # External
-from flask import request
-from flask import Flask
-import plyvel
+from flask import Flask, request, jsonify
+import traceback
+import sys
 
-# Internal
+# Internal 
 from blockchain import BlockchainCore
-from block import Block
-from utils.converter import list_obj_2_list_dict, obj_2_dict
-from transaction import Tx
-
-# TODO: refactor this
-obj_types = [type(Block([],'',0)), type(Tx('','',0))]
+BlockchainCore()
 
 '''
     TODO: secure the API
@@ -19,73 +14,39 @@ obj_types = [type(Block([],'',0)), type(Tx('','',0))]
         3. Add server error wrapper
 '''
 
+
+
 app = Flask(__name__)
 app.run('0.0.0.0', debug=False)
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Get current system exception
+    ex_type, ex_value, ex_traceback = sys.exc_info()
+
+    # Extract unformatter stack traces as tuples
+    trace_back = traceback.extract_tb(ex_traceback)
+
+    # Format stacktrace
+    stack_trace = list()
+
+    for trace in trace_back:
+        stack_trace.append("File : %s , Line : %d, Func.Name : %s, Message : %s" % (trace[0], trace[1], trace[2], trace[3]))
+
+    print("Exception type : %s " % ex_type.__name__)
+    print("Exception message : %s" %ex_value)
+    print('Stack trace: ')
+    for p in stack_trace:
+        print(p)
+
+    return { 
+        'error': True, 
+        f'{ex_type.__name__}': f'{ex_value}' 
+    }, 500 # Internal server error
 
 @app.route('/v1/health')
 def index():
     return { 'status': 'OK' }
 
-
-@app.route('/v1/last_block')
-def get_last_block():
-    blockchain = BlockchainCore()
-    return obj_2_dict(blockchain.get_last_block(), obj_types)
-
-
-@app.route('/v1/pending_txs')
-def get_pending_txs():
-    blockchain = BlockchainCore()
-    txs = blockchain.get_pending_txs()
-
-    return { 'txs': list_obj_2_list_dict(txs, obj_types) }
-
-
-@app.route('/v1/tx', methods=['POST'])
-def add_tx():
-    blockchain = BlockchainCore()
-
-    tx = Tx(
-        from_addr=request.json['from_addr'],
-        to_addr=request.json['to_addr'],
-        amount=request.json['amount']
-    )
-
-    tx.sign(request.json['secret'])
-
-    tx_added = blockchain.add_tx(tx)
-
-    return { 'success': tx_added }
-
-
-@app.route('/v1/blocks')
-def get_blocks():
-    blockchain = BlockchainCore()
-
-    page = request.args.get('page', default = 1, type = int)
-    page_size = request.args.get('page_size', default = 50, type = int)
-
-    blocks, stats = blockchain.get_blocks(page, page_size)
-
-    return { 
-        'stats': stats,
-        'blocks': list_obj_2_list_dict(blocks, obj_types)
-    }
-
-@app.route('/v1/balance')
-def get_balance():
-    blockchain = BlockchainCore()
-
-    addr = request.args.get('addr', default='', type=str)
-
-    return { 'balance': blockchain.get_balance(addr) }
-
-
-# TODO: remove this route, and implement third party miner software 
-@app.route('/v1/test/mine_block')
-def mine_block():
-    blockchain = BlockchainCore()
-
-    blockchain.mine_pending_txs('')
-
-    return { 'success': True }
+import routes.blockchain.routes
+import routes.challengers.routes
