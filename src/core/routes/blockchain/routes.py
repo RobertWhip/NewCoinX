@@ -18,7 +18,11 @@ def get_last_block():
 def get_pending_txs():
     blockchain = BlockchainCore()
     txs = blockchain.get_pending_txs()
-
+    
+    for tx in txs:
+        if tx.signature:
+            tx.signature = tx.signature.hex()
+            
     return { 'txs': list_obj_2_list_dict(txs, obj_types) }
 
 
@@ -61,13 +65,14 @@ def get_balance():
 
     return { 'balance': blockchain.get_balance(addr) }
 
-
-# TODO: remove this route, and implement third party miner software 
-@app.route('/v1/test/mine_block')
-def mine_block():
+@app.route('/v1/block', methods=['POST'])
+def add_block():
     blockchain = BlockchainCore()
 
-    blockchain.mine_pending_txs('')
+    for tx in request.json['txs']:
+        if tx['signature']:
+            tx['signature'] = bytes.fromhex(tx['signature'])
 
-    return { 'success': True }
+    result = blockchain.add_block(request.json, request.json['miner_addr'])
+    return result
 

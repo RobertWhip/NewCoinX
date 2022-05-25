@@ -49,4 +49,3 @@ def index():
     return { 'status': 'OK' }
 
 import routes.blockchain.routes
-import routes.challengers.routes

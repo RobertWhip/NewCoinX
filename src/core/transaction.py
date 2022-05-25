@@ -9,13 +9,6 @@ import configs.errors as errors
 import utils.wallet as wallet
 from error import Error
 
-'''
-    TODO:
-        1. implement UTXO
-        2. improve tx validation
-        3. think what fields should we add
-'''
-
 class Tx:
     def __init__(
         self, 
@@ -42,6 +35,15 @@ class Tx:
         tx.timestamp = dict.timestamp
         tx.hash = dict.hash
         tx.signature = dict.signature
+
+        return tx
+
+    @staticmethod
+    def read(tx_dict: dict):
+        tx = Tx(tx_dict['from_addr'], tx_dict['to_addr'], tx_dict['amount'])
+        tx.timestamp = tx_dict['timestamp']
+        tx.hash = tx_dict['hash']
+        tx.signature = tx_dict['signature']
 
         return tx
 
@@ -74,7 +76,7 @@ class Tx:
             tx_hash,
             private_key
         )
-
+        
         return True
 
     @staticmethod

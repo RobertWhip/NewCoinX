@@ -3,7 +3,6 @@ from typing import List, Union
 import copy
 
 # Internal
-from consensus.challenger_service import ChallengerService
 from db_models.singleton_meta import SingletonMeta
 from db_models.block_pdb import BlockPDB
 import configs.constants as constants
@@ -11,20 +10,9 @@ import core.configs.errors as errors
 from transaction import Tx
 from block import Block
 from error import Error
-#import consensus.challenger_service
-
-'''
-    TODO: 
-        1. Secure the blockchain
-        2. Use a BigNumber lib
-        3. Add try-catches
-        4. Think about timestamps
-        5. Implement P2P network functionality (connect to nodes, air blocks/transactions)
-'''
 
 class BlockchainCore(metaclass=SingletonMeta):
     def __init__(self) -> None:
-        self.challenger_service = ChallengerService()
         self.pending_txs: List[Tx] = []
         self.db: BlockPDB = BlockPDB()
 
@@ -36,9 +24,6 @@ class BlockchainCore(metaclass=SingletonMeta):
 
     def __str__(self) -> str:
         return f'\tBlockchain'
-
-    def chrService(self) -> ChallengerService:
-        return self.challenger_service
 
     @staticmethod
     def get_genesis_blocks() -> List[Block]:
@@ -99,6 +84,49 @@ class BlockchainCore(metaclass=SingletonMeta):
     def get_pending_txs(self):
         return copy.deepcopy(self.pending_txs)
 
+    def add_block(self, block_dict, miner_addr):
+        block = Block.read(block_dict)
+        # check if the miner mined pending txs
+        mined_txs = []
+
+        for tx in block.txs:
+            for p_tx in self.pending_txs:
+                if tx.hash == p_tx.hash:
+                    mined_txs.append(p_tx.hash)
+
+        if len(mined_txs) != len(block.txs):
+            return {
+                'success': False,
+                'msg': str(Error(errors.ERROR_INVALID_TXS))
+            }
+
+        # validate blockchain with new block
+        validated, error = self.validate(block)
+        if not validated:
+            return {
+                'success': False,
+                'msg': str(error)
+            }
+
+        # At this moment the block fully validated by this node.
+        # Now we remove the mined transactions from pending ones.
+        for tx_hash in mined_txs:
+            for i in range(len(self.pending_txs)-1, -1, -1):
+                if tx_hash == self.pending_txs[i].hash:
+                    del self.pending_txs[i]
+
+        self.db.save([block])
+
+        self.pending_txs.append(
+            Tx(
+                constants.MINER_BUDGET_ADDR, 
+                miner_addr, 
+                constants.REWARD
+            )
+        )
+
+        return { 'success': True }
+
     # TODO: how to replace this function?
     def mine_pending_txs(self, miner_addr):
         pending_txs = self.get_pending_txs()
@@ -152,34 +180,51 @@ class BlockchainCore(metaclass=SingletonMeta):
 
         return balance
 
-    def validate(self):
+    def validate_pair(self, curr_block, prev_block):
+        is_curr_block_valid, curr_block_valid_error = Block.is_valid(curr_block)
+        if not is_curr_block_valid:
+            return False, curr_block_valid_error
+
+        # If the current block was modified
+        if curr_block.hash != curr_block.calc_hash():
+            return False, Error(errors.ERROR_INVALID_BLOCK_HASH)
+
+        # If the current block points to an invalid block
+        if curr_block.prev_hash != prev_block.hash:
+            return False, Error(errors.ERROR_INVALID_PREVIOUS_BLOCK_HASH)
+
+        return True, None
+
+    def validate(self, new_block:Block=None):
         # TODO: should we validate by a snapshot?
         iter = self.db.open_iter(include_key=False)
         prev_block = self.db.next(iter)
 
         for val in iter:
-            print('Current block: ', val)
             curr_block = self.db.deserialize(val)
-            print('Current block: ', curr_block)
 
-            is_curr_block_valid, curr_block_valid_error = Block.is_valid(curr_block)
-            if not is_curr_block_valid:
-                return curr_block_valid_error
-
-            # If the current block was modified
-            if curr_block.hash != curr_block.calc_hash():
-                return Error(errors.ERROR_INVALID_BLOCK_HASH)
-
-            # If the current block points to an invalid block
-            if curr_block.prev_hash != prev_block.hash:
-                return Error(errors.ERROR_INVALID_PREVIOUS_BLOCK_HASH)
+            block_validated, block_error = self.validate_pair(curr_block, prev_block)
+            if not block_validated:
+                return False, block_error
 
             # Set current block as previous block for the next iteration
             prev_block = curr_block
 
+        # All blocks are validated at this step.
+
+        # Now validate the that we wan't to add
+        # if it is given as a function argument.
+        if new_block:
+            block_validated, block_error = self.validate_pair(new_block, prev_block)
+            if not block_validated:
+                return False, block_error
+
+
+        # Close DB iterator
         self.db.close_iter(iter)
 
-        return True
+        # Verified, no errors
+        return True, None
 
 if __name__ == '__main__':
     def create_tx(_from, _to, x, private_key):

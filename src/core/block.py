@@ -55,8 +55,6 @@ class Block:
 
     @staticmethod
     def verify_txs(block) -> tuple([bool, Error]):
-        print('Block in verify txs:', block)
-
         if block.txs is None or len(block.txs) <= 0:
             return False, Error(errors.ERROR_TRANSACTIONS_NOT_FOUND)
 
@@ -69,14 +67,43 @@ class Block:
         return True, None
 
     @staticmethod
-    def is_valid(block) -> bool:
-        print('Is block valid\'s block: ', block)
-        return Block.verify_txs(block)
+    def verify_hash(block):
+        if block.hash != block.calc_hash():
+            return False, Error(errors.ERROR_INVALID_BLOCK_HASH)
 
-    # TODO: change blockchain consensus: POW to POA
+        if block.hash[:constants.DIFFICULTY] != '0' * constants.DIFFICULTY:
+            return False, Error(errors.ERROR_INVALID_HASH_DIFFICULTY)
+
+        return True, None
+
+    @staticmethod
+    def is_valid(block) -> bool:
+        txs_verified, txs_error = Block.verify_txs(block)
+        hash_verified, hash_error = Block.verify_hash(block)
+
+        if not txs_verified:
+            return False, txs_error
+
+        if not hash_verified:
+            return False, hash_error
+
+        return True, None
+
     def mine(self):
         while self.hash[:constants.DIFFICULTY] != '0' * constants.DIFFICULTY:
             self.nonce = self.nonce + 1
             self.hash = self.calc_hash()
         
         return self.nonce
+
+    @staticmethod
+    def read(bl_dict: dict):
+        txs = [Tx.read(tx) for tx in bl_dict['txs']]
+
+        block = Block(txs, bl_dict['prev_hash'], bl_dict['height'])
+        
+        block.timestamp = bl_dict['timestamp']
+        block.nonce = bl_dict['nonce']
+        block.hash = bl_dict['hash']
+
+        return block
