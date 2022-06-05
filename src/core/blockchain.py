@@ -12,6 +12,7 @@ from block import Block
 from error import Error
 
 class BlockchainCore(metaclass=SingletonMeta):
+    # Init blockchain
     def __init__(self) -> None:
         self.pending_txs: List[Tx] = []
         self.db: BlockPDB = BlockPDB()
@@ -25,6 +26,7 @@ class BlockchainCore(metaclass=SingletonMeta):
     def __str__(self) -> str:
         return f'\tBlockchain'
 
+    # Get genesis block (first block of blockchain)
     @staticmethod
     def get_genesis_blocks() -> List[Block]:
         return [
@@ -46,12 +48,15 @@ class BlockchainCore(metaclass=SingletonMeta):
             )
         ]
 
+    # Get last block of blockchain
     def get_last_block(self):
         return self.db.get_last_val()
 
+    # Get latest height (height of the latest block)
     def get_max_height(self):
         return self.db.get_last_key()
 
+    # Get a list of blocks
     def get_blocks(self, page=1, page_size=50):
         max_height = self.get_max_height()
 
@@ -80,10 +85,11 @@ class BlockchainCore(metaclass=SingletonMeta):
 
         return blocks, { 'count': max_height, 'pages': -(-max_height//page_size) }
 
-    # Pending txs from memory
+    # Get pending transactions
     def get_pending_txs(self):
         return copy.deepcopy(self.pending_txs)
 
+    # Add block to blockchain
     def add_block(self, block_dict, miner_addr):
         block = Block.read(block_dict)
         # check if the miner mined pending txs
@@ -117,36 +123,18 @@ class BlockchainCore(metaclass=SingletonMeta):
 
         self.db.save([block])
 
-        self.pending_txs.append(
-            Tx(
-                constants.MINER_BUDGET_ADDR, 
-                miner_addr, 
-                constants.REWARD
-            )
-        )
-
-        return { 'success': True }
-
-    # TODO: how to replace this function?
-    def mine_pending_txs(self, miner_addr):
-        pending_txs = self.get_pending_txs()
-
-        if len(pending_txs) > 0:
-            last_block = self.get_last_block()
-            block = Block(pending_txs, last_block.hash, last_block.height+1)
-            
-            block.mine()
-
-            self.db.save([block])
-
-            self.pending_txs = [
+        if miner_addr:
+            self.pending_txs.append(
                 Tx(
                     constants.MINER_BUDGET_ADDR, 
                     miner_addr, 
                     constants.REWARD
                 )
-            ]
+            )
 
+        return { 'success': True }
+
+    # Add a pending transaction
     def add_tx(self, tx: Tx) -> Union[bool, Error]:
         balance = self.get_balance(tx.from_addr)
 
@@ -158,9 +146,7 @@ class BlockchainCore(metaclass=SingletonMeta):
         else:
             return error
 
-    # TODO: is it a good idea to iterate through all 
-    # the blocks just to get the balance? Is there a
-    # better solution?
+    # Get balance of an address
     def get_balance(self, addr):
         balance = 0
 
@@ -180,7 +166,8 @@ class BlockchainCore(metaclass=SingletonMeta):
 
         return balance
 
-    def validate_pair(self, curr_block, prev_block):
+    # Validate two blocks
+    def __validate_pair(self, curr_block, prev_block):
         is_curr_block_valid, curr_block_valid_error = Block.is_valid(curr_block)
         if not is_curr_block_valid:
             return False, curr_block_valid_error
@@ -195,15 +182,15 @@ class BlockchainCore(metaclass=SingletonMeta):
 
         return True, None
 
+    # Validate blockchain
     def validate(self, new_block:Block=None):
-        # TODO: should we validate by a snapshot?
         iter = self.db.open_iter(include_key=False)
         prev_block = self.db.next(iter)
 
         for val in iter:
             curr_block = self.db.deserialize(val)
 
-            block_validated, block_error = self.validate_pair(curr_block, prev_block)
+            block_validated, block_error = self.__validate_pair(curr_block, prev_block)
             if not block_validated:
                 return False, block_error
 
@@ -215,7 +202,7 @@ class BlockchainCore(metaclass=SingletonMeta):
         # Now validate the that we wan't to add
         # if it is given as a function argument.
         if new_block:
-            block_validated, block_error = self.validate_pair(new_block, prev_block)
+            block_validated, block_error = self.__validate_pair(new_block, prev_block)
             if not block_validated:
                 return False, block_error
 

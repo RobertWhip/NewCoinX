@@ -107,3 +107,29 @@ class Block:
         block.hash = bl_dict['hash']
 
         return block
+
+if __name__ == '__main__':
+    from timeit import default_timer as timer
+
+    balance_a = 5
+    public_a = '2d52efa3d5a106a2e25c0ec4ae8e221f2e273cc5a208684e42a78cd46e7af4503086ab7a4542fdc96b8746612f0e3a3249f7e4703173b7b81dbc278dd449394a'
+    secret_a = '6e5ccaac1aa98a87b43af3744f4ad7766aa37e815963bf8b0ace82cc888b4f18'
+    public_b = 'aa08eb959f1a448aa5c61fa8d27d92dfa56f0a052560c3b1277660d2ed4ba8387ccc612e5d63f77e1881f329c3135f88b32a5cf56be65ec24906825122deef8d'
+
+    tx0 = Tx(public_a, public_b, 0.05) # Створення транзакції
+    tx1 = Tx(public_a, public_b, 0.3) # Створення транзакції
+    tx0.sign(secret_a) # Ставлення цифрового підпису на транзакцію
+    tx1.sign(secret_a) # Ставлення цифрового підпису на транзакцію
+    prev_hash = 'Hash of previous block'
+    height = 2 # Висота попереднього блока + 1
+
+    new_block = Block([tx0, tx1], prev_hash, height) # Створення блоку
+
+
+    start = timer()
+    new_block.mine() # Майнінг блоку...
+    end = timer()
+
+    print(new_block) # На цьому кроці хеш знайдений
+    print('Mining took', end - start, 'seconds')
+    print('Verified:', Block.is_valid(new_block))

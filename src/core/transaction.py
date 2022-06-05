@@ -2,6 +2,17 @@
 from typing import Union
 import hashlib
 
+
+
+
+
+
+
+
+
+
+
+
 # Internal
 import configs.constants as constants
 import utils.timestamp as timestamp
@@ -22,21 +33,6 @@ class Tx:
         self.timestamp = timestamp.now()
         self.hash = self.calc_hash()
         self.signature = None
-
-    # TODO: do we need this function?
-    @staticmethod
-    def from_dict(dict: dict):
-        tx = Tx(
-            dict.from_addr,
-            dict.to_addr,
-            dict.amount
-        )
-
-        tx.timestamp = dict.timestamp
-        tx.hash = dict.hash
-        tx.signature = dict.signature
-
-        return tx
 
     @staticmethod
     def read(tx_dict: dict):
@@ -81,8 +77,6 @@ class Tx:
 
     @staticmethod
     def is_valid(tx, balance) -> tuple([bool, Error]):
-        # TODO: do not reject the TX, but set the correct reward. 
-        # Also think about mining reward TX validation 
         if tx.from_addr == constants.MINER_BUDGET_ADDR and tx.amount != constants.REWARD:
             return False, Error(errors.ERROR_INVALID_MINING_REWARD)
         
@@ -92,7 +86,7 @@ class Tx:
         if tx.from_addr == tx.to_addr:
             return False, Error(errors.ERROR_CANNOT_TRANFER_TO_OWN_ACCOUNT)
 
-        if tx.amount < 0:
+        if tx.amount <= 0:
             return False, Error(errors.ERROR_INVALID_AMOUNT)
 
         if balance is not None and balance < tx.amount:
@@ -101,7 +95,6 @@ class Tx:
         if tx.signature == None:
             return False, Error(errors.ERROR_INVALID_SIGNATURE)
 
-        # TODO: catch error
         public_key = wallet.to_ecdsa_public(tx.from_addr)
         
         return wallet.verify_signature(
@@ -111,4 +104,13 @@ class Tx:
         ), None
 
 if __name__ == '__main__':
-    print(Tx('1', '2', 3))
+    balance_a = 5
+    public_a = '2d52efa3d5a106a2e25c0ec4ae8e221f2e273cc5a208684e42a78cd46e7af4503086ab7a4542fdc96b8746612f0e3a3249f7e4703173b7b81dbc278dd449394a'
+    secret_a = '6e5ccaac1aa98a87b43af3744f4ad7766aa37e815963bf8b0ace82cc888b4f18'
+    public_b = 'aa08eb959f1a448aa5c61fa8d27d92dfa56f0a052560c3b1277660d2ed4ba8387ccc612e5d63f77e1881f329c3135f88b32a5cf56be65ec24906825122deef8d'
+
+    tx = Tx(public_a, public_b, 0.05) # Створення транзакції
+    tx.sign(secret_a) # Ставлення цифрового підпису на транзакцію
+
+    print(tx)
+    print('\tVerified:', Tx.is_valid(tx, balance_a))

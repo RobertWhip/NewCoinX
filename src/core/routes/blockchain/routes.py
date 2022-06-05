@@ -5,14 +5,12 @@ from node import app, request
 from transaction import Tx
 from block import Block
 
-# TODO: refactor this
 obj_types = [type(Block([],'',0)), type(Tx('','',0))]
 
 @app.route('/v1/last_block')
 def get_last_block():
     blockchain = BlockchainCore()
     return obj_2_dict(blockchain.get_last_block(), obj_types)
-
 
 @app.route('/v1/pending_txs')
 def get_pending_txs():
@@ -24,7 +22,6 @@ def get_pending_txs():
             tx.signature = tx.signature.hex()
             
     return { 'txs': list_obj_2_list_dict(txs, obj_types) }
-
 
 @app.route('/v1/tx', methods=['POST'])
 def add_tx():
@@ -41,7 +38,6 @@ def add_tx():
     tx_added = blockchain.add_tx(tx)
 
     return { 'success': tx_added }
-
 
 @app.route('/v1/blocks')
 def get_blocks():
@@ -75,4 +71,3 @@ def add_block():
 
     result = blockchain.add_block(request.json, request.json['miner_addr'])
     return result
-
